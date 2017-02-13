@@ -1,5 +1,4 @@
 # EF Core
-## Setup
 We are going to pick up from the last session and work with the ChoreRepository.cs file and add database support through EF Core.
 
 The ChoreRepository did an excellent job of outlining the models and behavior needed for the ChoreApp, and now is the time to start moving the project to production.  One of the primary strength of MVC is how it lends itself to separating concerns. We could have one project and dump everything into it, but that's no fun. The Start folder contains a refactored version of the SimpleAspNetCore application to help get things started to work with EF Core. The primary changes other than moving the classes to individual files is the domain models are moved into its own project. Below is an outline of the changes that were made. 
@@ -39,7 +38,7 @@ a console app is the only option.
     "Microsoft.EntityFrameworkCore.Tools": "1.0.0-preview2-final",
 ```
 6. Add the following "tools" section after "dependencies"
-```
+```javascript
   "tools": {
     "Microsoft.EntityFrameworkCore.Tools": {
       "version": "1.0.0-preview2-final",
@@ -60,7 +59,7 @@ The other settings are strictly for tooling and how Migrations are executed.
     "Microsoft.Extensions.Configuration.Json": "1.0.1"
 ```
 8. Before we can build our data access code we need to add a reference to the ChoreApp library to dependencies.
-```
+```javascript
     "ChoreApp": { "target": "project" },
 ```
 9. Add a new class to called "ChoreAppDbContext" and have it inherit from ChoreAppDbContext.
