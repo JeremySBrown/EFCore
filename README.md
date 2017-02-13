@@ -32,12 +32,12 @@ The .NET Core CLI must be able run a .NET Core app that targets a framework, and
 a framework. Therefore dotnet-ef cannot run against a library project. So as of now if you want to separate you EF Core code 
 a console app is the only option.
 
-5. To add EF Core open the project.json file and the following to "dependencies" 
+To add EF Core open the project.json file and the following to "dependencies" 
 ```javascript
     "Microsoft.EntityFrameworkCore.SqlServer": "1.0.1",
     "Microsoft.EntityFrameworkCore.Tools": "1.0.0-preview2-final",
 ```
-6. Add the following "tools" section after "dependencies"
+Add the following "tools" section after "dependencies"
 ```javascript
   "tools": {
     "Microsoft.EntityFrameworkCore.Tools": {
@@ -50,7 +50,7 @@ By adding Microsoft.EntityFrameworkCore.SqlServer this will provide support for 
 If you wanted target a different provider list SQLite you would use "Microsoft.EntityFrameworkCore.SQLite". 
 The other settings are strictly for tooling and how Migrations are executed.
 
-7. Since we want our data access to participte with dependency injection we need to add the 
+Since we want our data access to participte with dependency injection we need to add the 
     following to dependences.
 ```javascript
     "Microsoft.Extensions.Configuration": "1.0.1",
@@ -58,11 +58,11 @@ The other settings are strictly for tooling and how Migrations are executed.
     "Microsoft.Extensions.Configuration.FileExtensions": "1.0.1",
     "Microsoft.Extensions.Configuration.Json": "1.0.1"
 ```
-8. Before we can build our data access code we need to add a reference to the ChoreApp library to dependencies.
+Before we can build our data access code we need to add a reference to the ChoreApp library to dependencies.
 ```javascript
     "ChoreApp": { "target": "project" },
 ```
-9. Add a new class to called "ChoreAppDbContext" and have it inherit from ChoreAppDbContext.
+Add a new class to called "ChoreAppDbContext" and have it inherit from ChoreAppDbContext.
 
 ```c#
     public class ChoreAppDbContext : DbContext
@@ -71,7 +71,7 @@ The other settings are strictly for tooling and how Migrations are executed.
     }
 ```
 
-10. Add the following for the contructor.
+Add the following for the contructor.
 ```c#
     private readonly IConfigurationRoot _configurationRoot;
 
