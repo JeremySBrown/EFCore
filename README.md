@@ -13,11 +13,12 @@ The ChoreRepository did an excellent job of outlining the models and behavior ne
 5. An interface was extracted from the ChoreRepostory class and added to the Contracts folder.
 
 The SimpleAspNetCore project have the following changes
+
 1. Refrence to ChoreApp library project was added.
 2. ChoreRepository class was renamed to ChoreRepositoryStub and inherits from IChoreRepository.
 3. Startup changes
    1. DI changed to use IChoreRepository
-5. Controller changes
+4. Controller changes
    1. Change ChoreRepository to use IChoreRepository
 
 
@@ -33,7 +34,7 @@ a framework. Therefore dotnet-ef cannot run against a library project. So as of 
 a console app is the only option.
 
 5. To add EF Core open the project.json file and the following to "dependencies" 
-```
+```javascript
     "Microsoft.EntityFrameworkCore.SqlServer": "1.0.1",
     "Microsoft.EntityFrameworkCore.Tools": "1.0.0-preview2-final",
 ```
@@ -52,7 +53,7 @@ The other settings are strictly for tooling and how Migrations are executed.
 
 7. Since we want our data access to participte with dependency injection we need to add the 
     following to dependences.
-```
+```javascript
     "Microsoft.Extensions.Configuration": "1.0.1",
     "Microsoft.Extensions.Configuration.Abstractions": "1.0.1",
     "Microsoft.Extensions.Configuration.FileExtensions": "1.0.1",
@@ -64,7 +65,7 @@ The other settings are strictly for tooling and how Migrations are executed.
 ```
 9. Add a new class to called "ChoreAppDbContext" and have it inherit from ChoreAppDbContext.
 
-```
+```c#
     public class ChoreAppDbContext : DbContext
     {
        
@@ -72,7 +73,7 @@ The other settings are strictly for tooling and how Migrations are executed.
 ```
 
 10. Add the following for the contructor.
-```
+```c#
     private readonly IConfigurationRoot _configurationRoot;
 
     public ChoreAppDbContext(DbContextOptions<ChoreAppDbContext> options, IConfigurationRoot configurationRoot)
