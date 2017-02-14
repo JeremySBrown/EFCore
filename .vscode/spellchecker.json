@@ -1,0 +1,38 @@
+{
+    "language": "en_US",
+    "ignoreWordsList": [
+        "OnConfiguring",
+        "ChoreAppDbContext",
+        "ChoreApp",
+        "EntityFrameworkCore",
+        "SQLite",
+        "json",
+        "SqlServer",
+        "dotnet",
+        "IChoreRepository",
+        "ChoreRepository",
+        "ChoreRepositoryStub",
+        "ChoreRepostory",
+        "SimpleAspNetCore",
+        "appsettings",
+        "JSON",
+        "DbContext",
+        "ConfigureServices",
+        "ServiceLifetime",
+        "AddDbContext",
+        "POCO",
+        "LINQ",
+        "DataStore",
+        "nvarchar",
+        "nullable",
+        "ChildId"
+    ],
+    "documentTypes": [
+        "markdown",
+        "latex",
+        "plaintext"
+    ],
+    "ignoreRegExp": [],
+    "ignoreFileExtensions": [],
+    "checkInterval": 5000
+}
