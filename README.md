@@ -644,3 +644,113 @@ What we want to focus on is this query.
 This query is using the `Where` operator to return all the completed chores for a child for the current week. The criteria is a bit more complex but should be self explanatory. Since the `Date` property is nullable the null check is needed to ensure no exceptions are thrown for checking against a date value.
 
 ### Adding Data
+Adding data is very straight forward process. Replace the `AddUser` and `AddChore` methods with:
+```c#
+    public void AddUser(User value)
+    {
+        if (string.IsNullOrWhiteSpace(value.Name))
+        {
+            throw new InvalidRequestException();
+        }
+        _dbContext.Users.Add(value);
+        _dbContext.SaveChanges();
+    }
+
+    public void AddChore(Chore value)
+    {
+        if (string.IsNullOrWhiteSpace(value.Description))
+        {
+            throw new InvalidDataException();
+        }
+        if (!value.OnSunday &&
+            !value.OnMonday &&
+            !value.OnTuesday &&
+            !value.OnWednesday &&
+            !value.OnThursday &&
+            !value.OnFriday &&
+            !value.OnSaturday)
+        {
+            throw new InvalidDataException();
+        }
+
+        _dbContext.Chores.Add(value);
+        _dbContext.SaveChanges();
+    }
+```
+Exception for code to validate the model the last two lines is where the magic happens. To add data just use `Add` operator to add an entity to its `DbSet` and call the `SaveChanges` command. That's it. EF will throw an exception if do pass it an entity that does not pass any constraints defined in the database. Like missing requried fields or too long. If all goes well the entity is updated with it's shiny new primary key.
+
+To demonstrate even cooler ways to add data lets add a new class to seed the database with data. Add `ChoreAppInitializer.cs` to the `ChoreApp.DataStore` project and add the following code.
+```c#
+    public class ChoreAppInitializer
+    {
+        private readonly ChoreAppDbContext _dbContext;
+
+        public ChoreAppInitializer(ChoreAppDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public void Seed()
+        {
+            if (_dbContext.Users.Any())
+                return;
+
+            var children = new List<User>{
+                new User
+                {
+                    Name = "John",
+                    Chores = new List<Chore>{
+                        new Chore
+                        {
+                            Description = "Do Dishes",
+                            OnMonday = true,
+                            OnWednesday = true,
+                            OnFriday = true,
+                            OnSaturday = true
+                        },
+                        new Chore
+                        {
+                            Description = "Take Out Trash",
+                            OnWednesday = true
+                        },
+                        new Chore
+                        {
+                            Description = "Clean Room",
+                            OnSaturday = true
+                        },
+                    }
+                },
+                new User
+                {
+                    Name = "Mary",
+                    Chores = new List<Chore>(new[]
+                    {
+                        new Chore
+                        {
+                            Description = "Do Dishes",
+                            OnSunday = true,
+                            OnTuesday = true,
+                            OnThursday = true
+                        },
+                        new Chore
+                        {
+                            Description = "Clean Room",
+                            OnSaturday = true
+                        },
+                    })
+                },
+            };
+
+            _dbContext.Users.AddRange(children);
+            _dbContext.SaveChanges();
+        }
+    }
+
+```
+This class will seed the database like `ChoreRepositoryStub` class does and like the other add methods the magic happens in the last two lines.
+
+The `AddRange` operation takes an `IEnumerable` of an entity allowing for a batch insert of data. Also notice that the `User` objects are also creating a list of `Chores`. By simply adding a child object to an entity object EF will add the proper foreign keys during the save operation.
+
+
+
+

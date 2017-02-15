@@ -27,7 +27,8 @@
         "nullable",
         "ChildId",
         "easliy",
-        "EF's"
+        "EF's",
+        "requried"
     ],
     "documentTypes": [
         "markdown",
