@@ -26,7 +26,8 @@
         "nvarchar",
         "nullable",
         "ChildId",
-        "easliy"
+        "easliy",
+        "EF's"
     ],
     "documentTypes": [
         "markdown",

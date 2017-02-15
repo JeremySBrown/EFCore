@@ -338,3 +338,93 @@ Read-Write properties can also be ignored by the database by adding Data Annotat
     modelBuilder.Entity<Chore>()
             .Ignore(b => b.ExampleProperty);
 ```
+
+We need to wrap up the data model and there are three additional models in the `ChoreApp` library `CompletedChore`, `CompleteChorePayload`, and `AssignmentSummary`. Turns out we only need to add `CompletedChore`. The other two models are essentially just data transfer objects.
+
+`CompletedChore` is also just a simple model that stores whether or not a child has completed a chore. It just has the foreign keys for both objects and a nullable `DateTime` property to determine if the chore is done. Lets add two navigation properties to this class to both `User` and `Chore`. This will just be a single navigation just form `CompletedChore`.
+
+To define our relationship add the following  properties to `CompletedChore`.
+```c#
+    public User Child { get; set; }
+    public Chore Chore { get; set; }
+```
+
+Update `ChoreAppDbContext` with:
+```c#
+    public DbSet<CompletedChore> CompletedChores { get; set; }
+```
+and with in the `OnModelCreating`:
+```c#
+    modelBuilder.Entity<CompletedChore>()
+        .HasOne(p => p.Child)
+        .WithMany()
+        .HasForeignKey(k => k.ChildId);
+```
+Notice we only have to configure the relationship for `Child` because it does not follow EF's convention for defining foreign keys.
+
+Add the migration and update the database.
+```
+dotnet ef migrations add AddCompletedChore
+```
+```
+dotnet ef database update
+```
+
+When you add the migration EF reports success, but when you try to update the database you should get an exceptions.
+```
+Applying migration '20170215100307_AddCompletedChore'.
+System.Data.SqlClient.SqlException: Introducing FOREIGN KEY constraint 'FK_CompletedChores_Chores_ChoreId' on table 'CompletedChores' may cause cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+Could not create constraint or index. See previous errors.
+   at System.Data.SqlClient.SqlConnection.OnError(SqlException exception, Boolean breakConnection, Action`1 wrapCloseInAction)
+   at System.Data.SqlClient.TdsParser.ThrowExceptionAndWarning(TdsParserStateObject stateObj, Boolean callerHasConnectionLock, Boolean asyncClose)
+   at System.Data.SqlClient.TdsParser.TryRun(RunBehavior runBehavior, SqlCommand cmdHandler, SqlDataReader dataStream, BulkCopySimpleResultSet bulkCopyHandler, TdsParserStateObject stateObj, Boolean& dataReady)
+   at System.Data.SqlClient.SqlCommand.RunExecuteNonQueryTds(String methodName, Boolean async, Int32 timeout, Boolean asyncWrite)
+   at System.Data.SqlClient.SqlCommand.InternalExecuteNonQuery(TaskCompletionSource`1 completion, Boolean sendToPipe, Int32 timeout, Boolean asyncWrite, String methodName)
+   at System.Data.SqlClient.SqlCommand.ExecuteNonQuery()
+   at Microsoft.EntityFrameworkCore.Storage.Internal.RelationalCommand.Execute(IRelationalConnection connection, String executeMethod, IReadOnlyDictionary`2 parameterValues, Boolean openConnection, Boolean closeConnection)
+   at Microsoft.EntityFrameworkCore.Storage.Internal.RelationalCommand.ExecuteNonQuery(IRelationalConnection connection, IReadOnlyDictionary`2 parameterValues, Boolean manageConnection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.MigrationCommandExecutor.ExecuteNonQuery(IEnumerable`1 migrationCommands, IRelationalConnection connection)
+   at Microsoft.EntityFrameworkCore.Migrations.Internal.Migrator.Migrate(String targetMigration)
+   at Microsoft.EntityFrameworkCore.Design.MigrationsOperations.UpdateDatabase(String targetMigration, String contextType)
+   at Microsoft.EntityFrameworkCore.Tools.Cli.DatabaseUpdateCommand.<>c__DisplayClass0_0.<Configure>b__0()
+   at Microsoft.Extensions.CommandLineUtils.CommandLineApplication.Execute(String[] args)
+   at Microsoft.EntityFrameworkCore.Tools.Cli.Program.Main(String[] args)
+ClientConnectionId:10e20702-6c0b-4149-840a-9faa7942ed95
+Error Number:1785,State:0,Class:16
+Introducing FOREIGN KEY constraint 'FK_CompletedChores_Chores_ChoreId' on table 'CompletedChores' may cause cycles or multiple cascade paths. Specify ON DELETE NO ACTION or ON UPDATE NO ACTION, or modify other FOREIGN KEY constraints.
+Could not create constraint or index. See previous errors.
+```
+
+So even with our simple data model things could go horribly wrong because of how the relationships are defined. By convention EF defaults to cascade deletes, and in our model if we delete one record of any of the three entities would result in many unwanted deletes.
+
+Let's remove this migration and start over. Since the update was not applied to the database we only need to execute.
+```
+dotnet ef migrations remove
+```
+Replace the `CompletedChore` Fluent API section from `OnModelCreating` with:
+```
+    modelBuilder.Entity<CompletedChore>()
+        .HasOne(p => p.Child)
+        .WithMany()
+        .HasForeignKey(k => k.ChildId)
+        .OnDelete(DeleteBehavior.Restrict);
+
+    modelBuilder.Entity<CompletedChore>()
+        .HasOne(p => p.Chore)
+        .WithMany()
+        .HasForeignKey(k => k.ChoreId)
+        .OnDelete(DeleteBehavior.Restrict);
+```
+Since we need to override EF's convention we need to add a configuration for the `Chore` property and both relationships are configured to restrict deleting either a `User` or `Chore` record if it is linked to a `CompletedChore` record.
+
+With this change in place add the migration and update the database.
+```
+dotnet ef migrations add AddCompletedChore
+```
+```
+dotnet ef database update
+```
+Both should succeed this time and should produce another pretty image.
+
+![Completed Chores](./content/completedchores-table.png)
+
