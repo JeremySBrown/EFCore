@@ -212,7 +212,7 @@ We now have enough to build the database using Migrations. Open a command window
 
 Once you have the command window open type the following command to create your first migration.
 ```
-    dotnet ef migrations add InitialCreate
+dotnet ef migrations add InitialCreate
 ```
 If there are no issues you should see message:
 ```
@@ -242,7 +242,7 @@ With our database created you should have schema like.
 
 ![User Table - With Required Name](./content/user-table-name-required.png)
 
-Lets add the next entity model `Chore` to our database. We have a couple of options. We could add another `DbSet<Chore>` property to the `ChoreAppDbContext`, but lets take a different approach by modifying both the `User` and `Chore` class.
+Lets add the next entity model `Chore` to our database. We have a couple of options. We could add another `DbSet<Chore>` property to the `ChoreAppDbContext`, but lets take a different approach by modifying both the `User` class.
 
 Change the `User` class by adding the following property.
 ```c#
@@ -262,10 +262,79 @@ Then modify the constructors to make sure the list of chores properly initialize
     }
 ```
 
-In the Chore class comment out all references to the ChildId  property. Then from the command window add another migration and update the database.
 ```
 dotnet ef migrations add AddChores
 ```
 ```
 dotnet ef database update
+```
+Take a look at the results of the migration.
+
+![Chore Table With Shadow Property](./content/chore-table-with-shadow-property.png)
+
+By adding a collection of Chores to the User class EF added the Chore table to the database, and defined a one-to-many relationship between Users and Chore. It did this by adding the foreign key column `UserId` to the table. This property is called a `Shadow Property` because it column exists in the database but not as property on the entity model. The convention for these property names is `"Class Name"+"Id"`.
+
+This is not the result we were hoping for. It was great EF could pick up the table and relationship by simply using the `Chores` list property on the `User` class, but it didn't name the table correctly (by my standards) and it did not make use of the `ChildId` property that was already defined in the class.
+
+The other problem is that by not actually adding a `DbSet<Chore>` property in the `ChoreAppDbContext` class there is no  way to directly query `Chores` without going through the `User` entity. This also prevents performing other CRUD operations directly on `Chores`. There are times when you don't want to expose entities in this manner, but for this app we want that behavior.
+
+We could refactor our classes and add another migration to correct this, but in this case its best to rollback this migration and start over.
+
+Because the migration has already been applied to the database it needs to updated again but to a previous migration. This done by using the ef database command but adding the name of the migration we what to rollback to.
+```
+dotnet ef database update InitialCreate
+```
+EF will apply all of the `Down` methods in each of the migrations that occurred since the `InitialCreate` migration in reverse order. Once that is done the `AddChores` migration can be removed with.
+```
+dotnet ef migrations remove
+```
+
+We are now free to start over and refactor our models. Lets start by adding a `DbSet<Chore>` property to `ChoreAppDbContext`.
+```c#
+    public DbSet<Chore> Chores { get; set; }
+```
+Now lets modify the `Chore` class and replace the `ChildName` with a `User` property called 'Child' and keep the `ChildId` to define the foreign key. This would be considered a **Fully Defined** relationship because there navigation properties on both classes. The `ChoreAppDbContext` needs to be updated to accomplish this.
+
+Add the following to `ChoreAppDbContext`. This will make sure the `ChildId` is used for the foreign key. And while we're at it lets fix the `Description` property in `Chore` to be required with a max length of 500 using the Fluent API approach.
+```c#
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<User>()
+            .HasMany(p => p.Chores)
+            .WithOne(p => p.Child)
+            .HasForeignKey(k => k.ChildId);
+
+        modelBuilder.Entity<Chore>()
+                .Property(p => p.Description)
+                .IsRequired()
+                .HasMaxLength(500);
+    }
+```
+When configuring relationships only one side of the relationship needs to be configured. Since there is a navigation property on `Chore` we could have as easily the following to achieve the same result.
+```c#
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Chore>()
+            .HasOne(p => p.Child)
+            .WithMany(p => p.Chores)
+            .HasForeignKey(k => k.ChildId);
+    }
+```
+Now add this migration and update the database.
+```
+dotnet ef migrations add AddChores
+```
+```
+dotnet ef database update
+```
+![User Chore Relationship](./content/user-chore-relationship.png)
+
+Now that's pretty.
+
+Before we move on to our next model I want to point out there is no column for the property `AssignedDaysFormatted`. The reason for this is because its a read-only property.
+
+Read-Write properties can also be ignored by the database by adding Data Annotations `[NotMapped]`attribute or through the Fluent API by:
+```c#
+    modelBuilder.Entity<Chore>()
+            .Ignore(b => b.ExampleProperty);
 ```

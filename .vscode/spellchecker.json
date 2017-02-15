@@ -25,7 +25,8 @@
         "DataStore",
         "nvarchar",
         "nullable",
-        "ChildId"
+        "ChildId",
+        "easliy"
     ],
     "documentTypes": [
         "markdown",
