@@ -854,5 +854,63 @@ These methods are a little more involved than adding, but like add the magic hap
 
 One other thing to note. Remember when we were configuring the data model and had to change cascade delete behavior to restrict deleting `Users` and `Chores` if any `CompleteChores` existed. Both methods take care of that so the exception is not thrown on save.
 
+## Wiring Up the Database to SimpleAspNetCore Project
+Now that we've gone through the steps of separating out the `ChoreApp` models and data access we get to add them back to the `SimpleAspNetCore` web application.
 
+Add a reference to the `ChoreApp.DataStore` project to `SimpleAspNetCore` project by updating its `project.json` **"dependencies"** section.
+```javascript
+"ChoreApp.DataStore": {"target": "project"}
+```
 
+In `Starup.cs` change the `ConfigureServices` method to.
+```c#
+     public void ConfigureServices(IServiceCollection services)
+    {
+        services.AddMvc();        
+        services.AddSingleton(Configuration);
+        services.AddDbContext<ChoreAppDbContext>(ServiceLifetime.Scoped);
+        services.AddScoped<IChoreRepository, ChoreAppRepository>();
+        services.AddTransient<ChoreAppInitializer>();
+    }
+```
+The major changes here are:
+  1. Adding the `IConfigurationRoot` to the service container because the `ChoreApp.DataStore` project needs it.
+  2. Adding `ChoreAppDbContext` to the service container.
+  3. Replacing the implementation of `IChoreRepository` with new `ChoreAppRepository`. Notice the scope has changed because like the `DbContext` it should be created for each request.
+  4. Finally adding the `ChoreAppInitializer` class to the service container so we can seed the database in the `Configure` method.
+
+  And lastly change the `Configure` method by adding `ChoreAppInitializer` method parameter and calling the `Seed` at the end of the method.
+  ```c#
+    public void Configure(IApplicationBuilder app, IHostingEnvironment env, ILoggerFactory loggerFactory, ChoreAppInitializer choreAppInitializer)
+    {
+        loggerFactory.AddConsole(Configuration.GetSection("Logging"));
+        loggerFactory.AddDebug();
+
+        if (env.IsDevelopment())
+        {
+            app.UseDeveloperExceptionPage();
+            app.UseBrowserLink();
+        }
+        else
+        {
+            app.UseExceptionHandler("/Home/Error");
+        }
+
+        app.UseStaticFiles();
+
+        app.UseMvc(routes =>
+        {
+            routes.MapRoute(
+                name: "default",
+                template: "{controller=Home}/{action=Index}/{id?}");
+        });
+
+        choreAppInitializer.Seed();
+    }
+  ```
+
+If all went well you should be able to launch the application and it should run as before, but now using SQL Server as its datastore.
+
+Rarely the demo gods are that kind so if you run into any issues please let me know and I will be happy to help you. You can reach me through the Meetup page or by emailing me at jeremy@jeremysbrown.com.
+
+Happy Coding
