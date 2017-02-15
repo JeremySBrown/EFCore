@@ -251,7 +251,7 @@ With our database created you should have a schema like.
 
 ![User Table - With Required Name](./content/user-table-name-required.png)
 
-Lets add the next entity model `Chore` to our database. We have a couple of options. We could add another `DbSet<Chore>` property to the `ChoreAppDbContext`, but lets take a different approach by modifying both the `User` class.
+Lets add the next entity model `Chore` to our database. We have a couple of options. We could add another `DbSet<Chore>` property to the `ChoreAppDbContext`, but lets take a different approach by modifying the `User` class.
 
 Change the `User` class by adding the following property.
 ```c#
@@ -281,19 +281,21 @@ Take a look at the results of the migration.
 
 ![Chore Table With Shadow Property](./content/chore-table-with-shadow-property.png)
 
-By adding a collection of Chores to the User class EF added the Chore table to the database, and defined a one-to-many relationship between Users and Chore. It did this by adding the foreign key column `UserId` to the table. This property is called a `Shadow Property` because it column exists in the database but not as property on the entity model. The convention for these property names is `"Class Name"+"Id"`.
+By adding a collection of Chores to the User class EF added the Chore table to the database, and defined a one-to-many relationship between Users and Chore. It did this by adding the foreign key column `UserId` to the table. This type of property is called a `Shadow Property` because a column exists in the database but not as property on the entity model. The convention for these property names is `"Class Name"+"Id"`.
 
 This is not the result we were hoping for. It was great EF could pick up the table and relationship by simply using the `Chores` list property on the `User` class, but it didn't name the table correctly (by my standards) and it did not make use of the `ChildId` property that was already defined in the class.
 
-The other problem is that by not actually adding a `DbSet<Chore>` property in the `ChoreAppDbContext` class there is no  way to directly query `Chores` without going through the `User` entity. This also prevents performing other CRUD operations directly on `Chores`. There are times when you don't want to expose entities in this manner, but for this app we want that behavior.
+The other problem is that by not actually adding a `DbSet<Chore>` property in the `ChoreAppDbContext` class there is no way to directly query `Chores` without going through the `User` entity. This also prevents performing other CRUD operations directly on `Chores`. There are times when you don't want to expose entities in this manner, but for this app we want that behavior.
 
 We could refactor our classes and add another migration to correct this, but in this case its best to rollback this migration and start over.
 
-Because the migration has already been applied to the database it needs to updated again but to a previous migration. This done by using the ef database command but adding the name of the migration we what to rollback to.
+Because the migration has already been applied to the database it needs to updated again but to a previous migration. This done by using the `ef database` command but adding the name of the migration we what to rollback to.
+
 ```
 dotnet ef database update InitialCreate
 ```
-EF will apply all of the `Down` methods in each of the migrations that occurred since the `InitialCreate` migration in reverse order. Once that is done the `AddChores` migration can be removed with.
+
+EF will apply all of the `Down` methods in each of the migrations that occurred since the `InitialCreate` migration in reverse order. Once that is done the `AddChores` migration can be removed with:
 ```
 dotnet ef migrations remove
 ```
@@ -302,9 +304,9 @@ We are now free to start over and refactor our models. Lets start by adding a `D
 ```c#
     public DbSet<Chore> Chores { get; set; }
 ```
-Now lets modify the `Chore` class and replace the `ChildName` with a `User` property called 'Child' and keep the `ChildId` to define the foreign key. This would be considered a **Fully Defined** relationship because there navigation properties on both classes. The `ChoreAppDbContext` needs to be updated to accomplish this.
+Now lets modify the `Chore` class and replace the `ChildName` with a `User` property called 'Child' and keep the `ChildId` to define the foreign key. This would be considered a **Fully Defined** relationship because there are navigation properties on both classes. 
 
-Add the following to `ChoreAppDbContext`. This will make sure the `ChildId` is used for the foreign key. And while we're at it lets fix the `Description` property in `Chore` to be required with a max length of 500 using the Fluent API approach.
+The `ChoreAppDbContext` needs to be updated to accomplish this. Add the following to `ChoreAppDbContext`. This will make sure the `ChildId` is used for the foreign key. And while we're at it lets fix the `Description` property in `Chore` to be required with a max length of 500 using the `Fluent API` approach.
 ```c#
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -319,7 +321,7 @@ Add the following to `ChoreAppDbContext`. This will make sure the `ChildId` is u
                 .HasMaxLength(500);
     }
 ```
-When configuring relationships only one side of the relationship needs to be configured. Since there is a navigation property on `Chore` we could have as easily the following to achieve the same result.
+When configuring relationships only one side of the relationship needs to be configured. Since there is a navigation property on `Chore` we could have as easily used the following to achieve the same result.
 ```c#
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -347,7 +349,7 @@ Read-Write properties can also be ignored by the database by adding Data Annotat
     modelBuilder.Entity<Chore>()
             .Ignore(b => b.ExampleProperty);
 ```
-
+### One More Model
 We need to wrap up the data model and there are three additional models in the `ChoreApp` library `CompletedChore`, `CompleteChorePayload`, and `AssignmentSummary`. Turns out we only need to add `CompletedChore`. The other two models are essentially just data transfer objects.
 
 `CompletedChore` is also just a simple model that stores whether or not a child has completed a chore. It just has the foreign keys for both objects and a nullable `DateTime` property to determine if the chore is done. Lets add two navigation properties to this class to both `User` and `Chore`. This will just be a single navigation just form `CompletedChore`.
@@ -369,7 +371,7 @@ and with in the `OnModelCreating`:
         .WithMany()
         .HasForeignKey(k => k.ChildId);
 ```
-Notice we only have to configure the relationship for `Child` because it does not follow EF's convention for defining foreign keys.
+Notice we only have to configure the relationship for `Child` because it does not follow EF's convention for defining foreign keys, but `Chores` does.
 
 Add the migration and update the database.
 ```
@@ -406,12 +408,12 @@ Could not create constraint or index. See previous errors.
 
 So even with our simple data model things could go horribly wrong because of how the relationships are defined. By convention EF defaults to cascade deletes, and in our model if we delete one record of any of the three entities would result in many unwanted deletes.
 
-Let's remove this migration and start over. Since the update was not applied to the database we only need to execute.
+Let's remove this migration and start over. Since the update was not applied to the database we only need to execute:
 ```
 dotnet ef migrations remove
 ```
 Replace the `CompletedChore` Fluent API section from `OnModelCreating` with:
-```
+```c#
     modelBuilder.Entity<CompletedChore>()
         .HasOne(p => p.Child)
         .WithMany()
@@ -424,7 +426,7 @@ Replace the `CompletedChore` Fluent API section from `OnModelCreating` with:
         .HasForeignKey(k => k.ChoreId)
         .OnDelete(DeleteBehavior.Restrict);
 ```
-Since we need to override EF's convention we need to add a configuration for the `Chore` property and both relationships are configured to restrict deleting either a `User` or `Chore` record if it is linked to a `CompletedChore` record.
+Since we need to override EF's convention we need to add a configuration for the `Chore` property so both relationships can be configured to restrict deleting either a `User` or `Chore` record if it is linked to a `CompletedChore` record.
 
 With this change in place add the migration and update the database.
 ```
@@ -440,7 +442,7 @@ Both should succeed this time and should produce another pretty image.
 ## CRUD Time!
 To explore how to create, read, update and delete our entities let's start with creating a repository class that implements the `IChoreRepository` interface.
 
-Add a new class to the `ChoreApp.DataStore` project named `ChoreAppRepository.cs`. In addition to implementing `IChoreRepository` add a default constructor that takes a `ChoreAppDbContext` parameter. Should look like the follow.
+Add a new class to the `ChoreApp.DataStore` project named `ChoreAppRepository.cs`. In addition to implementing `IChoreRepository` add a default constructor that takes a `ChoreAppDbContext` parameter. Should look like the following.
 
 ```c#
     public class ChoreAppRepository : IChoreRepository
@@ -539,7 +541,7 @@ Its important to note that queries are not sent to the database right away unles
 
   1. Using an operator like `ToList`, `ToArray`, `First`, `FirstOrDefault`,`Single`, `SingleOrDefault`, or `Count`.
   2. Iterating results in a loop.
-  3. Databinding results to a UI.
+  3. Databinding results to a non-web UI.
 
 Let's see another type of query. Replace methods `GetUser` and `GetChore` with:
 ```c#
@@ -553,9 +555,11 @@ Let's see another type of query. Replace methods `GetUser` and `GetChore` with:
         return _dbContext.Chores.Include(p=>p.Child).SingleOrDefault(c => c.Id == id);
     }
 ```
-The two queries are the same and make use of the `Include` and `SignleOrDefault` operators. The `Include` expression will result in child data to be returned for each result. This operator could have been used in previous query, but would have resulted in a lot database pulled from the database that most likely won't be needed. Since it used along side `SingleOrDefault` there is less concern of too much being returned. However if you don't need it don't pull it.
+The two queries are the same and make use of the `Include` and `SignleOrDefault` operators. 
 
 The `SingleOrDefault` operator will either return a single entity or `null` if the there is no record that matches the criteria of the query. In this case we are filtering on the primary key of the entity which there should be only one or nothing. If for some reason the criteria could result in more than one record EF will throw an exception. In those cases you would use the `FirstOrDefault` operator which does the same thing but won't throw an exception if more than one record exist.
+
+The `Include` expression will result in child data to be returned for each result. This operator could have been used in previous query, but would have resulted in a lot data pulled from the database that most likely won't be needed. Since it used along side `SingleOrDefault` there is less concern of too much being returned. However if you don't need it don't pull it.
 
 Each operator has a counter part called `Single` and `First` which will throw an exception if no record is found.
 
@@ -610,7 +614,7 @@ Now lets take a look an even more complex example that returns a collection of r
         return assignments.OrderBy(x => x.Day).ToList();
     }
 ```
-This is a complex method and we won't go into by line by line, but it essential builds of the DTO `AssignmentSummary` by querying the `CompleteChores` for a given child. It also makes use of some extra private methods which  you'll need to add in order to build the code. Add the following to end of the `ChoreRepository`.
+This is a complex method and we won't go into by line by line, but it essential builds up the data transfer object `AssignmentSummary` by querying `CompleteChores` for a given child. It also makes use of some extra private methods which  you'll need to add in order to build the code. Add the following to end of the `ChoreRepository`.
 
 ```c#
     private static DateTime GetDateTimeThisWeek(DayOfWeek day)
@@ -686,9 +690,9 @@ Adding data is very straight forward process. Replace the `AddUser` and `AddChor
         _dbContext.SaveChanges();
     }
 ```
-Exception for code to validate the model the last two lines is where the magic happens. To add data just use `Add` operator to add an entity to its `DbSet` and call the `SaveChanges` command. That's it. EF will throw an exception if do pass it an entity that does not pass any constraints defined in the database. Like missing requried fields or too long. If all goes well the entity is updated with it's shiny new primary key.
+Ignoring the code to validate the model the last two lines is where the magic happens. To add data just use the `Add` operator to add an entity to its `DbSet` and call the `SaveChanges` command. That's it. EF will throw an exception if you do add an entity that does not pass any constraints defined in the database. Like missing requried fields or strings too long for the field. If all goes well the entity is updated with a shiny new primary key.
 
-To demonstrate even cooler ways to add data lets add a new class to seed the database with data. Add `ChoreAppInitializer.cs` to the `ChoreApp.DataStore` project and add the following code.
+To demonstrate an even cooler way to add data lets add a new class to seed the database with data. Add `ChoreAppInitializer.cs` to the `ChoreApp.DataStore` project and add the following code.
 ```c#
     public class ChoreAppInitializer
     {
@@ -761,7 +765,7 @@ This class will seed the database like `ChoreRepositoryStub` class does and like
 The `AddRange` operation takes an `IEnumerable` of an entity allowing for a batch insert of data. Also notice that the `User` objects are also creating a list of `Chores`. By simply adding a child object to an entity object EF will add the proper foreign keys during the save operation.
 
 ### Updating Data
-Updating data is just as straight forward as adding. The simplest way is to pull the existing record from the database, change one or more properties, and then save. Add the `EditUser` and `EditChore` methods to the `ChoreAppRepository` see it action. 
+Updating data is just as straight forward as adding. The simplest way is to pull the existing record from the database, change one or more properties, and then save. Add the `EditUser` and `EditChore` methods to the `ChoreAppRepository` to see it in action. 
 ```c#
     public void EditUser(int id, User value)
     {
@@ -861,7 +865,7 @@ As you would expect deleting data is just the opposite of adding it and just as 
 ```
 These methods are a little more involved than adding, but like add the magic happens in `Remove`, `RemoveRange`, and `SaveChanges` operations. You can remove a single entity with `Remove` and a collection of entities with `RemoveRange`. And of course the database is not updated until `SaveChanges` is called.
 
-One other thing to note. Remember when we were configuring the data model and had to change cascade delete behavior to restrict deleting `Users` and `Chores` if any `CompleteChores` existed. Both methods take care of that so the exception is not thrown on save.
+One other thing to note. Remember when we were configuring the data model and had to change the cascade delete behavior to restrict deleting `Users` and `Chores` if any `CompleteChores` existed. Both methods take care of that so the exception is not thrown on save.
 
 ## Wiring Up the Database to SimpleAspNetCore Project
 Now that we've gone through the steps of separating out the `ChoreApp` models and data access we get to add them back to the `SimpleAspNetCore` web application.
@@ -920,7 +924,11 @@ The major changes here are:
 
 If all went well you should be able to launch the application and it should run as before, but now using SQL Server as its datastore.
 
-Rarely the demo gods are that kind so if you run into any issues please let me know and I will be happy to help you. You can reach me through the Meetup page or by emailing me at jeremy@jeremysbrown.com.
+Rarely the demo gods are that kind so if you run into any issues and can't work past them refer to the project in the [Finish](./finish) folder it contains a completed version for this session.
+
+You can reach me through the [Meetup](https://www.meetup.com/TRINUG/events/237161277/) page or by emailing me at jeremy@jeremysbrown.com.
 
 ### One last thing.
-We did not implement all of the methods in `ChoreAppRepository`. I am leaving those for you to complete if you wish. If not you can see the final project in the Final folder.
+We did not implement all of the methods in `ChoreAppRepository`. I am leaving those for you to complete if you wish. If not you can see the final project in the [Finish](./finish) folder.
+
+Happy Coding!
