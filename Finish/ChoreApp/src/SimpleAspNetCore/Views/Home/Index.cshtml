@@ -1,0 +1,15 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+
+<ul>
+@foreach (var u in (List<SimpleAspNetCore.Models.UserViewModel>)ViewData["users"])
+{
+    <li>@u.Name</li>
+}
+</ul>
+
+<form action="/user/add" method="post">
+    <input type="text" name="Name" />
+    <button type="submit">Add</button>
+</form> 

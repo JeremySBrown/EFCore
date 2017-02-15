@@ -1,7 +1,7 @@
 # EF Core
 We are going to pick up from the last session and work with the ChoreRepository.cs file and add database support through EF Core.
 
-The ChoreRepository did an excellent job of outlining the models and behavior needed for the ChoreApp, and now is the time to start moving the project to production.  One of the primary strength of MVC is how it lends itself to separating concerns. We could have one project and dump everything into it, but that's no fun. The Start folder contains a refactored version of the SimpleAspNetCore application to help get things started to work with EF Core. The primary changes other than moving the classes to individual files is the domain models are moved into its own project. Below is an outline of the changes that were made. 
+The ChoreRepository did an excellent job of outlining the models and behavior needed for the ChoreApp, and now is the time to start moving the project to forward.  One of the primary strength of MVC is how it lends itself to separating concerns. We could have one project and dump everything into it, but that's no fun. The Start folder contains a refactored version of the SimpleAspNetCore application to help get things started for this session. The primary changes other than moving the classes to individual files is the domain models are moved into its own project. Below is an outline of the changes that were made. 
 
 1. Solution renamed to ChoreApp because it will be containing more than just the SimpleAspNetCore project.
 2. A .NET Core Library project named "ChoreApp" was added. 
@@ -22,6 +22,8 @@ The SimpleAspNetCore project have the following changes
 
 
 ## Adding EF Core project
+To get things rolling lets start by adding a new console project to our solution.
+
 1. Add a new project by selecting File -> New -> Project
 2. Select .NET Core on the left of the New Project dialog box
 3. Select Console Application (.NET Core)
@@ -913,4 +915,5 @@ If all went well you should be able to launch the application and it should run 
 
 Rarely the demo gods are that kind so if you run into any issues please let me know and I will be happy to help you. You can reach me through the Meetup page or by emailing me at jeremy@jeremysbrown.com.
 
-Happy Coding
+### One last thing.
+We did not implement all of the methods in `ChoreAppRepository`. I am leaving those for you to complete if you wish. If not you can see the final project in the Final folder.
