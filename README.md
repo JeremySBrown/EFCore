@@ -29,7 +29,7 @@ To get things rolling lets start by adding a new console project to our solution
 3. Select Console Application (.NET Core)
 4. Name the project ChoreApp.DataStore
 
-The reason we are using a Console Application rather than a Class Library project has to do with the tooling for Migrations. The .NET Core CLI must be able run a .NET Core app that targets a framework, and class Library projects are built without a framework. Therefore dotnet-ef cannot run against a library project. So as of now if you want to separate your EF Core code and use Data Migrations a console app is the only option.
+The reason we are using a Console Application rather than a Class Library project has to do with the tooling for Migrations. The .NET Core CLI must be able to run a .NET Core app that targets a framework and class Library projects are built without a framework. Therefore dotnet-ef cannot run against a library project. So as of now if you want to separate your EF Core code and use Data Migrations a console app is the only option.
 
 To add EF Core open the project.json file and the following to "dependencies" 
 ```javascript

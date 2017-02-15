@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 14
+VisualStudioVersion = 14.0.25420.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{2E7D541E-79B1-4FA8-880A-8A3E52795CA4}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{A2F6E70D-74A6-4EF0-A289-AD1CAA2AD523}"
+	ProjectSection(SolutionItems) = preProject
+		global.json = global.json
+	EndProjectSection
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "SimpleAspNetCore", "src\SimpleAspNetCore\SimpleAspNetCore.xproj", "{D08BFC6F-4E4F-4F09-B3CA-6B22241A55EF}"
+EndProject
+Project("{8BB2217D-0F2D-49D1-97BC-3654ED321F3B}") = "ChoreApp", "src\ChoreApp\ChoreApp.xproj", "{CCAA7E4B-0CFD-46F2-84FD-E9832138A26B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D08BFC6F-4E4F-4F09-B3CA-6B22241A55EF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D08BFC6F-4E4F-4F09-B3CA-6B22241A55EF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D08BFC6F-4E4F-4F09-B3CA-6B22241A55EF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D08BFC6F-4E4F-4F09-B3CA-6B22241A55EF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCAA7E4B-0CFD-46F2-84FD-E9832138A26B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCAA7E4B-0CFD-46F2-84FD-E9832138A26B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCAA7E4B-0CFD-46F2-84FD-E9832138A26B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCAA7E4B-0CFD-46F2-84FD-E9832138A26B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D08BFC6F-4E4F-4F09-B3CA-6B22241A55EF} = {2E7D541E-79B1-4FA8-880A-8A3E52795CA4}
+		{CCAA7E4B-0CFD-46F2-84FD-E9832138A26B} = {2E7D541E-79B1-4FA8-880A-8A3E52795CA4}
+	EndGlobalSection
+EndGlobal
