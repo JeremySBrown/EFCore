@@ -1,7 +1,7 @@
 # EF Core
 We are going to pick up from the last session and work with the ChoreRepository.cs file and add database support through EF Core.
 
-The ChoreRepository did an excellent job of outlining the models and behavior needed for the ChoreApp, and now is the time to start moving the project to forward.  One of the primary strength of MVC is how it lends itself to separating concerns. We could have one project and dump everything into it, but that's no fun. The Start folder contains a refactored version of the SimpleAspNetCore application to help get things started for this session. The primary changes other than moving the classes to individual files is the domain models are moved into its own project. Below is an outline of the changes that were made. 
+The ChoreRepository did an excellent job of outlining the models and behavior needed for the ChoreApp, and now is the time to start moving the project to forward.  One of the primary strength of MVC is how it lends itself to separating concerns. We could have one project and dump everything into it, but that's no fun. The [Start](./start) folder contains a refactored version of the SimpleAspNetCore application to help get things started for this session. The primary changes other than moving the classes to individual files is the domain models are moved into its own project. Below is an outline of the changes that were made. 
 
 1. Solution renamed to ChoreApp because it will be containing more than just the SimpleAspNetCore project.
 2. A .NET Core Library project named "ChoreApp" was added. 
