@@ -803,4 +803,56 @@ Updating data is just as straight forward as adding. The simplest way is to pull
     }    
 ```
 
+### Deleting Data
+As you would expect deleting data is just the opposite of adding it and just as straight forward. Replace the `DeleteUser` and `DeleteChore` methods in `ChoreAppDbContext` with:
+```c#
+    public void DeleteUser(int id)
+    {
+        var hasExistingChores = _dbContext.Chores.Any(x => x.ChildId == id);
+        if (hasExistingChores)
+        {
+            throw new DataConflictException();
+        }
+
+        var user = _dbContext.Users.FirstOrDefault(u => u.Id == id);
+        if (user == null)
+        {
+            throw new DataMissingException();
+        }        
+
+        var completedToRemove = _dbContext.CompletedChores.Where(x => x.ChildId == id).ToList();
+        if (completedToRemove.Any())
+        {
+            _dbContext.CompletedChores.RemoveRange(completedToRemove);
+        }
+
+        _dbContext.Users.Remove(user);
+        
+        _dbContext.SaveChanges();
+    }
+
+    public void DeleteChore(int id)
+    {
+        var chore = _dbContext.Chores.FirstOrDefault(c => c.Id == id);
+        if (chore == null)
+        {
+            throw new DataMissingException();
+        }
+        
+        var completedChores = _dbContext.CompletedChores.Where(cc => cc.ChoreId == id).ToList();
+        if (completedChores.Any())
+        {
+            _dbContext.CompletedChores.RemoveRange(completedChores);
+        }
+
+        _dbContext.Chores.Remove(chore);
+
+        _dbContext.SaveChanges();
+    }        
+```
+These methods are a little more involved than adding, but like add the magic happens in `Remove`, `RemoveRange`, and `SaveChanges` operations. You can remove a single entity with `Remove` and a collection of entities with `RemoveRange`. And of course the database is not updated until `SaveChanges` is called.
+
+One other thing to note. Remember when we were configuring the data model and had to change cascade delete behavior to restrict deleting `Users` and `Chores` if any `CompleteChores` existed. Both methods take care of that so the exception is not thrown on save.
+
+
 
