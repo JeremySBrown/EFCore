@@ -123,15 +123,15 @@ This takes care of the basic plumbing required for adding EF support. The real f
 
 ## Building the Data Model &amp; Database
 
-Entity Framework can take your POCO classes and convert them into a relational database. It does this by making heavy use of conventions, but also uses a Fluent API and Data Annotations to augment and fine tune configuration. 
+Entity Framework can take your POCO classes and convert them into a relational database. It does this by making heavy use of conventions, but also uses a `Fluent API` and `Data Annotations` to augment and fine tune configurations. 
 
-You can make use of all three methods and generally my preferred approach. As a side note my general rule is when the configuration has to do with the database I use the Fluent API, and when it has to do with the model especially when it comes to validation I use Data Annotations. 
+You can make use of all three methods, but don't duplicate. If personally follow a basic rule that when the configuration has to do with the database I use the `Fluent API`, and when it has to do with the model especially when it comes to validation I use `Data Annotations`. 
 
-Lets add our first entity model to the database. Open the ChoreAppDbContext class and add the following after the constructor.
+Lets add our first entity model to the database. Open the `ChoreAppDbContext` class and add the following after the constructor.
 ```c#
     public DbSet<User> Users { get; set; }
 ```
-By adding this property EF now has enough information to add and maintain a table in your target database. It also means you can use LINQ to build query the database and your data context to do CRUD operations on this table. 
+By adding this property EF now has enough information to add and maintain a table in your target database. It also means you can use LINQ for working with a database. More on that later.
 
 Open the User class in the ChoreApp.DataStore project.
 ```c#
@@ -149,11 +149,13 @@ Open the User class in the ChoreApp.DataStore project.
         public string Name { get; set; }
     }
 ```
-By convention EF will create a table called Users and it will contain to columns for the Id and Name properties. 
+By convention EF will create a table called Users and it will contain two columns for the Id and Name properties. 
 
-It will make Id the primary key because it is named Id, but would also accept UserId for the primary key. If an entity class had an atypical primary key property you can use either the Fluent API or Data Annotations to define your primary key.
+Because there is an `Id` property it will be used for the primary key. It would also use `UserId` bacause it follows the pattern of `<type name>Id`. 
 
-For Data Annotations add the Key attribute to the property you want to use for the primary key.
+If an entity class had an atypical primary key property you can use either the `Fluent API` or `Data Annotations` to define your primary key.
+
+For `Data Annotations` add the `Key` attribute to the property you want to use for the primary key.
 ```c#
     public class User
     {   
@@ -163,7 +165,7 @@ For Data Annotations add the Key attribute to the property you want to use for t
     }
 ```
 
-To setup Fluent API for your models you must override OnModelCreating method in your DbContext class. So for the above example you would add the following to the ChoreAppDbContext class.
+To setup `Fluent API` for your models you must override the `OnModelCreating` method in your DbContext class. So for the above example you would add the following to the `ChoreAppDbContext` class.
 ```c#
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -175,9 +177,9 @@ The Name property as it is currently defined would be added to the Users table a
 
 ![User Table - With Optional Name](./content/user-table-name-optional.png)
 
-If your primary goal is to give your DBA holy hell then don't change this. However if you listen to your mother and pre-school teachers and want to play nice with others modified this property to have a fix length. Also given the nature of this property it should also be required.
+If your primary goal in life is to give your DBA holy hell then don't change this. However if you listen to your mother and pre-school teachers and want to play nice with others modify this property to have a fix length. Also given the nature of this property it should also be required.
 
-Data Annotations method
+`Data Annotations` method
 ```c#
     public class User
     {
@@ -190,7 +192,7 @@ Data Annotations method
         public string Name { get; set; }
     }
 ```
-Fluent API method
+`Fluent API` method
 ```c#
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -214,11 +216,11 @@ We now have enough to build the database using Migrations. Open a command window
   1. In Visual Studio right-click the project in Solution Explorer and select "Open Folder in File Explorer".
   2. From File Explorer hold down the Shift key and right-click the project folder and select "Open command window here"
 
-Once you have the command window open type the following command to create your first migration.
+Once you have the command window open, type the following command to create your first migration.
 ```
 dotnet ef migrations add InitialCreate
 ```
-If there are no issues you should see message:
+If there are no issues you should see the message:
 ```
 Done.
 
@@ -232,17 +234,20 @@ or
 ```
 No parameterless constructor was found on 'ChoreAppDbContext'. Either add a parameterless constructor to 'ChoreAppDbContext' or add an implementation of 'IDbContextFactory<ChoreAppDbContext>' in the same assembly as 'ChoreAppDbContext'.
 ```
-This usually means the tooling is not configured properly most likely due to a typo in project.json or the version of the tooling does not work with the version of EF Core you are targeting. The second error can also be due the DbContext not being added to the service container in StartUp.cs.
+This usually means the tooling is not configured properly and most likely due to a typo in `project.json` or the version of the tooling does not work with the version of EF Core you are targeting. The second error can also be due to the DbContext not being added to the service container in `StartUp.cs`.
 
 Once you have a successful execution a new Migrations folder is added to the project. Each time you use the `migrations add` command new code is generated that instructions EF on how to apply the changes to your target database and also how to remove the changes should you want to rollback the change. In addition to migration code a snap-shot of the current database schema is generated.
+
+This is handled by the database provider type you are using so your output would be different if not targeting SQL Server.
 
 To apply the migration to the database use the following:
 ```
 dotnet ef database update
 ```
 You can now open the SQL Server Object Explorer to see the new database.
+
 ### Back to the Data Model
-With our database created you should have schema like.
+With our database created you should have a schema like.
 
 ![User Table - With Required Name](./content/user-table-name-required.png)
 
