@@ -751,6 +751,56 @@ This class will seed the database like `ChoreRepositoryStub` class does and like
 
 The `AddRange` operation takes an `IEnumerable` of an entity allowing for a batch insert of data. Also notice that the `User` objects are also creating a list of `Chores`. By simply adding a child object to an entity object EF will add the proper foreign keys during the save operation.
 
+### Updating Data
+Updating data is just as straight forward as adding. The simplest way is to pull the existing record from the database, change one or more properties, and then save. Add the `EditUser` and `EditChore` methods to the `ChoreAppRepository` see it action. 
+```c#
+    public void EditUser(int id, User value)
+    {
+        if (string.IsNullOrWhiteSpace(value.Name))
+        {
+            throw new InvalidDataException();
+        }
+        var user = _dbContext.Users.FirstOrDefault(u => u.Id == id);
+        if (user != null)
+        {
+            user.Name = value.Name;
+            _dbContext.SaveChanges();
+        }
 
+        throw new InvalidRequestException();
+    }
+    public void EditChore(int id, Chore value)
+    {
+        if (string.IsNullOrWhiteSpace(value.Description))
+        {
+            throw new InvalidDataException();
+        }
+        if (!value.OnSunday &&
+            !value.OnMonday &&
+            !value.OnTuesday &&
+            !value.OnWednesday &&
+            !value.OnThursday &&
+            !value.OnFriday &&
+            !value.OnSaturday)
+        {
+            throw new InvalidDataException();
+        }
+
+        var chore = _dbContext.Chores.FirstOrDefault(c => c.Id == id);
+        if (chore != null)
+        {
+            chore.Description = value.Description;
+            chore.OnSunday = value.OnSunday;
+            chore.OnMonday = value.OnMonday;
+            chore.OnTuesday = value.OnTuesday;
+            chore.OnWednesday = value.OnWednesday;
+            chore.OnThursday = value.OnThursday;
+            chore.OnFriday = value.OnFriday;
+            chore.OnFriday = value.OnSaturday;
+
+            _dbContext.SaveChanges();
+        }
+    }    
+```
 
 
