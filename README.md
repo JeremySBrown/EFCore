@@ -428,3 +428,219 @@ Both should succeed this time and should produce another pretty image.
 
 ![Completed Chores](./content/completedchores-table.png)
 
+## CRUD Time!
+To explore how to create, read, update and delete our entities let's start with creating a repository class that implements the `IChoreRepository` interface.
+
+Add a new class to the `ChoreApp.DataStore` project named `ChoreAppRepository.cs`. In addition to implementing `IChoreRepository` add a default constructor that takes a `ChoreAppDbContext` parameter. Should look like the follow.
+
+```c#
+    public class ChoreAppRepository : IChoreRepository
+    {
+        private readonly ChoreAppDbContext _dbContext;
+
+        public ChoreAppRepository(ChoreAppDbContext dbContext)
+        {
+            _dbContext = dbContext;
+        }
+
+        public List<User> GetAllUsers()
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<Chore> GetAllChores()
+        {
+            throw new NotImplementedException();
+        }
+
+        public List<AssignmentSummary> GetChildAssignmentsThisWeek(int childId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public User GetUser(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Chore GetChore(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddUser(User value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EditUser(int id, User value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DeleteUser(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void AddChore(Chore value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void EditChore(int id, Chore value)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void DeleteChore(int id)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void CompleteChore(CompleteChorePayload data)
+        {
+            throw new NotImplementedException();
+        }
+
+        public void ClearChoreCompletion(CompleteChorePayload data)
+        {
+            throw new NotImplementedException();
+        }
+    }
+```
+### Querying Data
+All EF operations use LINQ (Language Integrated Query) which in a nutshell allows you to write strongly typed queries using the ChoreAppDbContext and entity classes.
+
+To demonstrate a basic query modify `GetAllUsers` and `GetAllChores` methods with:
+```c#
+    public List<User> GetAllUsers()
+    {
+        return _dbContext.Users.OrderBy(p=>p.Name).ToList();
+    }
+
+    public List<Chore> GetAllChores()
+    {
+        return _dbContext.Chores.OrderBy(p=>p.Description).ToList();
+    }
+```
+Even if you've never seen or used LINQ its still clear what is going on here. We are using the `ChoreAppDbContext` to return all of the records in a specified table ordered by specified column on that table. This is a very basic query and we'll see more complex ones soon, but they all follow same pattern. 
+
+Its important to note that queries are not sent to the database right away unless one of the following happens.
+
+  1. Using an operator like `ToList`, `ToArray`, `First`, `FirstOrDefault`,`Single`, `SingleOrDefault`, or `Count`.
+  2. Iterating results in a loop.
+  3. Databinding results to a UI.
+
+Let's see another type of query. Replace methods `GetUser` and `GetChore` with:
+```c#
+    public User GetUser(int id)
+    {
+        return _dbContext.Users.Include(p=>p.Chores).SingleOrDefault(u => u.Id == id);
+    }
+
+    public Chore GetChore(int id)
+    {
+        return _dbContext.Chores.Include(p=>p.Child).SingleOrDefault(c => c.Id == id);
+    }
+```
+The two queries are the same and make use of the `Include` and `SignleOrDefault` operators. The `Include` expression will result in child data to be returned for each result. This operator could have been used in previous query, but would have resulted in a lot database pulled from the database that most likely won't be needed. Since it used along side `SingleOrDefault` there is less concern of too much being returned. However if you don't need it don't pull it.
+
+The `SingleOrDefault` operator will either return a single entity or `null` if the there is no record that matches the criteria of the query. In this case we are filtering on the primary key of the entity which there should be only one or nothing. If for some reason the criteria could result in more than one record EF will throw an exception. In those cases you would use the `FirstOrDefault` operator which does the same thing but won't throw an exception if more than one record exist.
+
+Each operator has a counter part called `Single` and `First` which will throw an exception if no record is found.
+
+Now lets take a look an even more complex example that returns a collection of results. Replace the `GetChildAssignmentsThisWeek` with:
+```c#
+    public List<AssignmentSummary> GetChildAssignmentsThisWeek(int childId)
+    {
+        var assignments = new List<AssignmentSummary>();
+        var childChores = _dbContext.Chores.Where(x => x.ChildId == childId).ToList();
+        var startOfWeek = GetDateTimeThisWeek(DayOfWeek.Sunday);
+        var endOfWeek = GetEndOfDay(GetDateTimeThisWeek(DayOfWeek.Saturday));
+
+        var completedThisWeekByChild = _dbContext.CompletedChores
+            .Where(x => x.ChildId == childId &&
+                        x.Date.HasValue &&
+                        x.Date.Value >= startOfWeek &&
+                        x.Date.Value <= endOfWeek).ToList();
+
+        foreach (var chore in childChores)
+        {
+            var completedThisChoreThisWeekByChild = completedThisWeekByChild.Where(x => x.ChoreId == chore.Id).ToList();
+            if (chore.OnSunday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Sunday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Sunday)));
+            }
+            if (chore.OnMonday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Monday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Monday)));
+            }
+            if (chore.OnTuesday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Tuesday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Tuesday)));
+            }
+            if (chore.OnWednesday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Wednesday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Wednesday)));
+            }
+            if (chore.OnThursday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Thursday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Thursday)));
+            }
+            if (chore.OnFriday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Friday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Friday)));
+            }
+            if (chore.OnSaturday)
+            {
+                assignments.Add(new AssignmentSummary(chore.Id, childId, chore.Description, DayOfWeek.Saturday, CompletedOnDay(completedThisChoreThisWeekByChild, DayOfWeek.Saturday)));
+            }
+        }
+
+        return assignments.OrderBy(x => x.Day).ToList();
+    }
+```
+This is a complex method and we won't go into by line by line, but it essential builds of the DTO `AssignmentSummary` by querying the `CompleteChores` for a given child. It also makes use of some extra private methods which  you'll need to add in order to build the code. Add the following to end of the `ChoreRepository`.
+
+```c#
+    private static DateTime GetDateTimeThisWeek(DayOfWeek day)
+    {
+        var todayDateTime = DateTime.Now;
+        var today = new DateTime(todayDateTime.Year, todayDateTime.Month, todayDateTime.Day);
+        var diff = day - today.DayOfWeek;
+        var desired = today.AddDays(diff);
+        return desired;
+    }
+
+    private static DateTime GetEndOfDay(DateTime date)
+    {
+        return date.Date.AddDays(1).AddMilliseconds(-1);
+    }
+
+    private static bool IsDateMatch(DateTime left, DateTime right)
+    {
+        if (left.Year == right.Year && left.Month == right.Month && left.Day == right.Day)
+        {
+            return true;
+        }
+        return false;
+    }
+
+    private static bool CompletedOnDay(IEnumerable<CompletedChore> chores, DayOfWeek day)
+    {
+        return chores.Any(x => x.Date.HasValue && IsDateMatch(x.Date.Value, GetDateTimeThisWeek(day)));
+    }
+```
+
+What we want to focus on is this query.
+```c#
+    var completedThisWeekByChild = _dbContext.CompletedChores
+        .Where(x => x.ChildId == childId &&
+                    x.Date.HasValue &&
+                    x.Date.Value >= startOfWeek &&
+                    x.Date.Value <= endOfWeek).ToList();
+```
+This query is using the `Where` operator to return all the completed chores for a child for the current week. The criteria is a bit more complex but should be self explanatory. Since the `Date` property is nullable the null check is needed to ensure no exceptions are thrown for checking against a date value.
+
+### Adding Data
