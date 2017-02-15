@@ -31,7 +31,7 @@ To get things rolling lets start by adding a new console project to our solution
 
 The reason we are using a Console Application rather than a Class Library project has to do with the tooling for Migrations. The .NET Core CLI must be able to run a .NET Core app that targets a framework and class Library projects are built without a framework. Therefore dotnet-ef cannot run against a library project. So as of now if you want to separate your EF Core code and use Data Migrations a console app is the only option.
 
-To add EF Core open the project.json file and the following to "dependencies" 
+To add EF Core open the project.json file and add the following to "dependencies" 
 ```javascript
     "Microsoft.EntityFrameworkCore.SqlServer": "1.0.1",
     "Microsoft.EntityFrameworkCore.Tools": "1.0.0-preview2-final",
@@ -45,23 +45,22 @@ Add the following "tools" section after "dependencies"
     } 
   },
 ```
-By adding Microsoft.EntityFrameworkCore.SqlServer this will provide support for EF Core and SQL Server Data Provider.
-If you wanted target a different provider list SQLite you would use "Microsoft.EntityFrameworkCore.SQLite". 
-The other settings are strictly for tooling and how Migrations are executed.
+By adding `Microsoft.EntityFrameworkCore.SqlServer` this will provide support for EF Core and the SQL Server Data Provider. If you wanted to target a different provider like SQLite you would use `Microsoft.EntityFrameworkCore.SQLite`. The other settings are strictly for tooling and how Migrations are executed.
 
-Since we want our data access to participate with dependency injection we need to add the 
-    following to dependences.
+Since we want our data access to participate with dependency injection we also need to add the following to dependences.
+
 ```javascript
     "Microsoft.Extensions.Configuration": "1.0.1",
     "Microsoft.Extensions.Configuration.Abstractions": "1.0.1",
     "Microsoft.Extensions.Configuration.FileExtensions": "1.0.1",
     "Microsoft.Extensions.Configuration.Json": "1.0.1"
 ```
-Before we can build our data access code we need to add a reference to the ChoreApp library to dependencies.
+Before we can build our data access code we need to add a reference to the `ChoreApp` library to dependencies.
 ```javascript
     "ChoreApp": { "target": "project" },
 ```
-Add a new class to called "ChoreAppDbContext" and have it inherit from ChoreAppDbContext.
+
+Add a new class named `ChoreAppDbContext.cs` and have it inherit from `DbContext`.
 
 ```c#
     public class ChoreAppDbContext : DbContext
@@ -79,7 +78,7 @@ Add the following for the constructor. This constructor will be used for Depende
         _configurationRoot = configurationRoot;
     }
 ```
-Add the following code to override the OnConfiguring method.
+Add the following code to override the OnConfiguring method. This will instruct EF that we want to use SQL Server as our datastore.
 ```c#
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -87,14 +86,17 @@ Add the following code to override the OnConfiguring method.
         optionsBuilder.UseSqlServer(_configurationRoot["Data:ConnectionString"]);
     }
 ```
-Add a new JSON file named "appsettings.json" and add the following. Also add this to the appsettings.json file in the SimpleAspNetCore project.
+To add the  connection string need in `OnConfiguring` add a new `JSON` file named `appsettings.json` with: 
+
 ```javascript
   "Data": {
     "ConnectionString": "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=ChoreApp;Integrated Security=True;Connect Timeout=30;Encrypt=False;TrustServerCertificate=True;ApplicationIntent=ReadWrite;MultiSubnetFailover=False"
   }
 ```
+Also add this to the `appsettings.json` file in the `SimpleAspNetCore` project.
 
-Like the SimpleAspNetCore project our EF project will also need a Startup class. Add the class to the root of the project with the following code.
+
+Like the `SimpleAspNetCore` project our EF project will also need a Startup class. Add the class to the root of the project with:
 ```c#
     public class Startup
     {
@@ -115,9 +117,9 @@ Like the SimpleAspNetCore project our EF project will also need a Startup class.
         }
     }
 ```
-The only major difference in this start up class is the AddDbContext method in the ConfigureServices. This is adding our DbContext type to the service container. The ServiceLifetime.Scoped means the ChoreAppDbContext will be created for each service request. This generally the preferred setting for web applications.
+The only major difference in this start up class is the `AddDbContext` method in `ConfigureServices`. This is adding our DbContext type to the service container. The `ServiceLifetime.Scoped` means the `ChoreAppDbContext` will be created for each service request. This is generally the preferred setting for web applications.
 
-This takes care of the basic plumbing required to EF support into a project. The real fun begins with building the data model. 
+This takes care of the basic plumbing required for adding EF support. The real fun begins with building the data model. 
 
 ## Building the Data Model &amp; Database
 
